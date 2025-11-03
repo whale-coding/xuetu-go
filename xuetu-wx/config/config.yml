@@ -1,0 +1,8 @@
+app:
+  name: xuetu-wx
+  port: 8094
+
+redis:
+  addr: 117.72.163.254:6379
+  DB: 0
+  Password: "njq264657"
