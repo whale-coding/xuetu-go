@@ -1,0 +1,25 @@
+server:
+  port: 8080
+
+mysql:
+  host: 127.0.0.1
+  port: 3306
+  user: root
+  password: ahu264657
+  dbname: jc-club
+
+redis:
+  host: 127.0.0.1
+  port: 6379
+  password: ""
+  db: 0
+
+rabbitmq:
+  host: localhost
+  port: 5672
+  username: admin
+  password: password123
+
+jwt:
+  secret: your-secret-key-here  # 建议使用更复杂的密钥
+  expire: 3600

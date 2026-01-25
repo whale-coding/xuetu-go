@@ -1,35 +1,53 @@
-# If you prefer the allow list template instead of the deny list, see community template:
-# https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
-#
-# Binaries for programs and plugins
+
+# 忽略Go编译生成的文件
 *.exe
-*.exe~
-*.dll
-*.so
-*.dylib
-
-# Test binary, built with `go test -c`
-*.test
-
-# Code coverage profiles and other test artifacts
 *.out
-coverage.*
-*.coverprofile
-profile.cov
+*.o
+*.so
+*.a
+*.dll
+*.test
+*.prof
 
-# Dependency directories (remove the comment below to include it)
-# vendor/
 
-# Go workspace file
-go.work
-go.work.sum
+#package file
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
 
-# env file
+# 忽略Node.js相关文件（Vue 3前端）
+node_modules/
+yarn.lock
+package-lock.json
+
+# 忽略Vue 3构建生成的文件
+dist/
+
+# 忽略测试文件
+coverage/
+test-results/
+
+# 忽略环境变量文件
 .env
+.env.local
+.env.development
+.env.production
 
-# Editor/IDE
- .idea/
- .vscode/
+#Intellij idea
+.idea/
+/idea/
+*.ipr
+*.iml
+*.iws
+
+# temp file
+*.log
+*.cache
+*.diff
+*.patch
+*.tmp
 
 # system ignore
 .DS_Store
