@@ -1,6 +1,4 @@
-package auth
-
-import "xuetu-project/internal/model"
+package model
 
 // User 用户模型
 type User struct {
@@ -15,7 +13,7 @@ type User struct {
 	Introduce string `gorm:"column:introduce;size:255" json:"introduce"`
 	ExtJson   string `gorm:"column:ext_json;size:255" json:"extJson"`
 	Status    int    `gorm:"column:status;type:tinyint;default:1" json:"status"` // 1-正常 0-禁用
-	model.BaseModel
+	BaseModel
 }
 
 // TableName 显式指定表名，避免gorm自动使用复数表名

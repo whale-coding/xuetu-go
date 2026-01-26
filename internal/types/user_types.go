@@ -1,6 +1,8 @@
 package types
 
-import "xuetu-project/internal/model/auth"
+import (
+	"xuetu-project/internal/model"
+)
 
 // UserRegisterRequest 注册请求
 type UserRegisterRequest struct {
@@ -105,15 +107,15 @@ type UserQueryRequest struct {
 	//PageSize  int    `form:"page_size,default=10"` // 每页大小
 	OrderBy           string `form:"order_by"`   // 排序字段
 	SortOrder         string `form:"sort_order"` // 排序方向: asc/desc
-	PaginationRequest                            // 分页参数：页码和每页大小
+	PaginationRequest        // 分页参数：页码和每页大小
 }
 
 // UserListResponse 用户列表响应
 type UserListResponse struct {
-	Total int64       `json:"total"`
-	Items []auth.User `json:"items"`
-	Page  int         `json:"page"`
-	Size  int         `json:"size"`
+	Total int64        `json:"total"`
+	Items []model.User `json:"items"`
+	Page  int          `json:"page"`
+	Size  int          `json:"size"`
 }
 
 // BatchDeleteRequest 批量删除请求

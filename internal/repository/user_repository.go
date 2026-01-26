@@ -1,8 +1,8 @@
-package auth
+package repository
 
 import (
 	"errors"
-	"xuetu-project/internal/model/auth"
+	"xuetu-project/internal/model"
 	"xuetu-project/internal/types"
 
 	"gorm.io/gorm"
@@ -13,14 +13,14 @@ type UserRepository interface {
 	BeginTransaction() *gorm.DB                // 开启一个事务
 	Transaction(func(tx *gorm.DB) error) error // 执行事务
 
-	Create(user *auth.User) error
-	GetByID(id uint) (*auth.User, error)
-	GetByUsername(username string) (*auth.User, error)
-	Update(user *auth.User) error
+	Create(user *model.User) error
+	GetByID(id uint) (*model.User, error)
+	GetByUsername(username string) (*model.User, error)
+	Update(user *model.User) error
 	Delete(id uint) error
 	UpdateStatus(id uint, status int) error
 	Query() *gorm.DB
-	QueryUsersWithCondition(query *types.UserQuery) ([]*auth.User, int64, error)
+	QueryUsersWithCondition(query *types.UserQuery) ([]*model.User, int64, error)
 }
 
 // userRepository 用户仓库实现   UserRepo
@@ -46,13 +46,13 @@ func (r *userRepository) Transaction(txFunc func(tx *gorm.DB) error) error {
 // ------------------------------------------------------------------
 
 // Create 创建用户 ✅
-func (r *userRepository) Create(user *auth.User) error {
+func (r *userRepository) Create(user *model.User) error {
 	return r.db.Create(user).Error
 }
 
 // GetByID 根据ID获取用户
-func (r *userRepository) GetByID(id uint) (*auth.User, error) {
-	var user auth.User
+func (r *userRepository) GetByID(id uint) (*model.User, error) {
+	var user model.User
 	if err := r.db.First(&user, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("用户不存在")
@@ -63,8 +63,8 @@ func (r *userRepository) GetByID(id uint) (*auth.User, error) {
 }
 
 // GetByUsername 按用户名查询用户 ✅
-func (r *userRepository) GetByUsername(username string) (*auth.User, error) {
-	var user auth.User
+func (r *userRepository) GetByUsername(username string) (*model.User, error) {
+	var user model.User
 	if err := r.db.Where("user_name = ?", username).First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -75,29 +75,29 @@ func (r *userRepository) GetByUsername(username string) (*auth.User, error) {
 }
 
 // Update 更新用户
-func (r *userRepository) Update(user *auth.User) error {
+func (r *userRepository) Update(user *model.User) error {
 	return r.db.Save(user).Error
 }
 
 // Delete 删除用户（软删除）
 func (r *userRepository) Delete(id uint) error {
-	var user auth.User
+	var user model.User
 	return r.db.Delete(&user, id).Error
 }
 
 // UpdateStatus 更新用户状态
 func (r *userRepository) UpdateStatus(id uint, status int) error {
-	return r.db.Model(&auth.User{}).Where("id = ?", id).Update("status", status).Error
+	return r.db.Model(&model.User{}).Where("id = ?", id).Update("status", status).Error
 }
 
 // Query 返回查询构建器
 func (r *userRepository) Query() *gorm.DB {
-	return r.db.Model(&auth.User{})
+	return r.db.Model(&model.User{})
 }
 
 // QueryUsersWithCondition 查询用户
-func (r *userRepository) QueryUsersWithCondition(query *types.UserQuery) ([]*auth.User, int64, error) {
-	var users []*auth.User
+func (r *userRepository) QueryUsersWithCondition(query *types.UserQuery) ([]*model.User, int64, error) {
+	var users []*model.User
 
 	var count int64
 	db := r.db

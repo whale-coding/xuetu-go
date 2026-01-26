@@ -1,11 +1,11 @@
-package auth
+package service
 
 import (
 	"fmt"
 	"log"
 	"time"
 	"xuetu-project/internal/constant"
-	"xuetu-project/internal/model/auth"
+	"xuetu-project/internal/model"
 	"xuetu-project/internal/pkg/jwt"
 	"xuetu-project/internal/pkg/redis"
 	"xuetu-project/internal/repository"
@@ -22,10 +22,10 @@ type UserService interface {
 	GetUserInfo(u uint) (*types.UserInfoResponse, error)
 	UpdateUserInfo(u uint, t *types.UserUpdateInfoRequest) error
 
-	GetUserByUsername(username string) (*auth.User, error)
-	CreateUser(user *auth.User) error
-	GetUserByID(id uint) (*auth.User, error)
-	UpdateUser(user *auth.User) error
+	GetUserByUsername(username string) (*model.User, error)
+	CreateUser(user *model.User) error
+	GetUserByID(id uint) (*model.User, error)
+	UpdateUser(user *model.User) error
 	DeleteUser(id uint) error
 	UpdateUserStatus(id uint, status int) error
 	QueryUsers(query *types.UserQueryRequest) (*types.UserListResponse, error)
@@ -61,7 +61,7 @@ func (s *userService) Register(req *types.UserRegisterRequest) error {
 		return fmt.Errorf("密码哈希处理失败: %v", err)
 	}
 	// 创建用户模型
-	user := &auth.User{
+	user := &model.User{
 		Username:  req.Username,
 		Password:  string(hashedPassword), // 存储哈希后的密码
 		Nickname:  req.Nickname,
@@ -183,17 +183,17 @@ func (s *userService) UpdateUserInfo(userId uint, t *types.UserUpdateInfoRequest
 //   ---------------------------------------------------------------
 
 // GetUserByUsername 根据用户名获取用户 ✅
-func (s *userService) GetUserByUsername(username string) (*auth.User, error) {
+func (s *userService) GetUserByUsername(username string) (*model.User, error) {
 	return s.repo.UserRepo.GetByUsername(username)
 }
 
 // GetUserByID 根据ID获取用户  ✅
-func (s *userService) GetUserByID(id uint) (*auth.User, error) {
+func (s *userService) GetUserByID(id uint) (*model.User, error) {
 	return s.repo.UserRepo.GetByID(id)
 }
 
 // CreateUser 创建用户 ✅
-func (s *userService) CreateUser(user *auth.User) error {
+func (s *userService) CreateUser(user *model.User) error {
 	// 检查用户名是否已存在
 	existingUser, err := s.repo.UserRepo.GetByUsername(user.Username)
 	if err == nil && existingUser != nil {
@@ -205,7 +205,7 @@ func (s *userService) CreateUser(user *auth.User) error {
 }
 
 // UpdateUser 更新用户 ✅
-func (s *userService) UpdateUser(user *auth.User) error {
+func (s *userService) UpdateUser(user *model.User) error {
 	return s.repo.UserRepo.Update(user)
 }
 
@@ -299,7 +299,7 @@ func (s *userService) QueryUsers(query *types.UserQueryRequest) (*types.UserList
 	}
 
 	// 查询用户列表
-	var users []auth.User
+	var users []model.User
 	err = queryBuilder.Offset(offset).Limit(pageSize).Order(fmt.Sprintf("%s %s", orderBy, sortOrder)).Find(&users).Error
 	if err != nil {
 		return nil, fmt.Errorf("查询用户列表失败: %v", err)
@@ -350,7 +350,7 @@ func (s *userService) BatchDeleteUser(ids []uint) error {
 	}
 
 	// 执行批量删除操作
-	if err := tx.Where("id IN (?)", ids).Delete(&auth.User{}).Error; err != nil {
+	if err := tx.Where("id IN (?)", ids).Delete(&model.User{}).Error; err != nil {
 		tx.Rollback() // 如果删除失败，回滚事务
 		return err
 	}
@@ -367,7 +367,7 @@ func (s *userService) BatchDeleteUser2(ids []uint) error {
 	// 使用 gorm 的 Transaction 方法
 	return s.repo.UserRepo.Transaction(func(tx *gorm.DB) error {
 		// 执行批量删除操作
-		if err := tx.Where("id IN (?)", ids).Delete(&auth.User{}).Error; err != nil {
+		if err := tx.Where("id IN (?)", ids).Delete(&model.User{}).Error; err != nil {
 			return fmt.Errorf("批量删除用户失败: %v", err)
 		}
 		return nil

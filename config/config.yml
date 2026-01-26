@@ -6,7 +6,7 @@ mysql:
   port: 3306
   user: root
   password: ahu264657
-  dbname: jc-club
+  dbname: xuetu
 
 redis:
   host: 127.0.0.1

@@ -1,4 +1,4 @@
-package auth
+package controller
 
 import (
 	"log"
@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 	"xuetu-project/internal/constant"
-	"xuetu-project/internal/model/auth"
+	"xuetu-project/internal/model"
 	"xuetu-project/internal/pkg/redis"
 	"xuetu-project/internal/pkg/response"
 	"xuetu-project/internal/pkg/util"
@@ -180,7 +180,7 @@ func (c *userController) CreateUser(ctx *gin.Context) {
 	log.Printf("创建用户请求参数: %+v\n", req)
 
 	// 将请求参数转换为 User 模型
-	user := &auth.User{
+	user := &model.User{
 		Username:  req.Username,
 		Nickname:  req.Nickname,
 		Email:     req.Email,
