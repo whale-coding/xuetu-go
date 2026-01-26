@@ -11,7 +11,7 @@ type User struct {
 	Avatar    string `gorm:"column:avatar;size:255" json:"avatar"`
 	Email     string `gorm:"column:email;size:100" json:"email"`
 	Phone     string `gorm:"column:phone;size:20" json:"phone"`
-	Sex       int    `gorm:"column:sex;type:tinyint" json:"sex"` // 例如：0-未知, 1-男, 2-女
+	Sex       int    `gorm:"column:sex;type:tinyint" json:"sex"` // 例如：0-男, 1-女
 	Introduce string `gorm:"column:introduce;size:255" json:"introduce"`
 	ExtJson   string `gorm:"column:ext_json;size:255" json:"extJson"`
 	Status    int    `gorm:"column:status;type:tinyint;default:1" json:"status"` // 1-正常 0-禁用

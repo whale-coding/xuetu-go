@@ -4,8 +4,13 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
+	"time"
+	"xuetu-project/internal/constant"
 	"xuetu-project/internal/model/auth"
+	"xuetu-project/internal/pkg/redis"
 	"xuetu-project/internal/pkg/response"
+	"xuetu-project/internal/pkg/util"
 	"xuetu-project/internal/service"
 	"xuetu-project/internal/types"
 
@@ -16,6 +21,12 @@ import (
 type UserController interface {
 	Register(ctx *gin.Context)
 	Login(ctx *gin.Context)
+	GetUserInfo(ctx *gin.Context)
+	Logout(ctx *gin.Context)
+	UpdateUserInfo(ctx *gin.Context)
+
+	// --------------------------------------------------------------------------------------------
+
 	CreateUser(ctx *gin.Context)
 	GetUserByID(ctx *gin.Context)
 	GetUserByUsername(ctx *gin.Context)
@@ -79,9 +90,83 @@ func (c *userController) Login(ctx *gin.Context) {
 	res := types.LoginResponse{
 		Token: token,
 	}
-
+	log.Println("登录成功，Token:", token)
 	response.Success(ctx, res)
 }
+
+// GetUserInfo 获取用户信息
+func (c *userController) GetUserInfo(ctx *gin.Context) {
+	// 从Context获取用户ID（封装的工具函数）
+	userId, ok := util.GetUserId(ctx)
+	log.Println("获取用户信息，用户ID:", userId)
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"code": 401, "msg": "未获取到用户信息，请重新登录"})
+		return
+	}
+
+	// 调用服务层获取用户信息
+	result, err := c.svc.UserService.GetUserInfo(userId)
+	if err != nil {
+		ctx.JSON(500, gin.H{"error": "获取用户信息失败: " + err.Error()})
+		return
+	}
+
+	response.Success(ctx, result)
+}
+
+// Logout 用户登出
+func (c *userController) Logout(ctx *gin.Context) {
+	// 1. 从Header获取Token
+	authHeader := ctx.GetHeader("Authorization")
+	if authHeader == "" {
+		ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "退出成功"})
+		return
+	}
+	tokenStr := strings.SplitN(authHeader, " ", 2)[1]
+
+	// 2. Redis操作：删除Token + 加入黑名单（防复用，黑名单过期时间=原Token剩余时间）
+	redisKey := constant.RedisKeyToken + tokenStr
+	_ = redis.Del(redisKey)
+	_ = redis.SAdd(constant.RedisKeyBlack, tokenStr)
+
+	// 刷新黑名单过期时间，与原Token一致
+	_ = redis.Expire(constant.RedisKeyBlack, time.Duration(constant.RedisTokenExpire)*time.Second)
+
+	log.Println("用户退出登录，Token加入黑名单:", tokenStr)
+	// 3. 返回结果
+	response.Success(ctx, "退出登录成功")
+}
+
+// UpdateUserInfo 更新用户信息
+func (c *userController) UpdateUserInfo(ctx *gin.Context) {
+	// 从Context获取用户ID（封装的工具函数）
+	userId, ok := util.GetUserId(ctx)
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"code": 401, "msg": "未获取到用户信息，请重新登录"})
+		return
+	}
+	log.Println("获取用户信息，用户ID:", userId)
+
+	// 获取请求参数
+	var req types.UserUpdateInfoRequest
+
+	// 参数绑定与验证
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(400, gin.H{"error": "参数验证失败: " + err.Error()})
+		return
+	}
+	log.Printf("更新用户信息请求参数: %+v\n", req)
+
+	// 调用服务层更新用户信息
+	if err := c.svc.UserService.UpdateUserInfo(userId, &req); err != nil {
+		ctx.JSON(500, gin.H{"error": "更新用户信息失败: " + err.Error()})
+		return
+	}
+
+	response.Success(ctx, "用户信息更新成功")
+}
+
+// --------------------------------------------------------------------------------------------
 
 // CreateUser 创建用户
 func (c *userController) CreateUser(ctx *gin.Context) {

@@ -21,3 +21,12 @@ const (
 	MsgTokenInvalid   = "token无效"
 	MsgServerInternal = "服务器内部错误"
 )
+
+// Redis Key前缀（单Token简化）
+const (
+	RedisKeyToken = "token:"       // 单Token存储前缀：key=token:xxx, value=userID
+	RedisKeyBlack = "token:black:" // Token黑名单前缀（退出后防复用）
+	// 过期时间也可以直接使用jwt配置的过期时间
+	RedisTokenExpire = 2 * 60 * 60 // Redis中token 的过期时间2小时，单位：秒
+
+)

@@ -22,4 +22,4 @@ rabbitmq:
 
 jwt:
   secret: your-secret-key-here  # 建议使用更复杂的密钥
-  expire: 3600
+  expire: 3600  # 令牌过期时间，单位为秒，这里设置为1小时

@@ -3,6 +3,7 @@ package router
 import (
 	"time"
 	"xuetu-project/internal/controller"
+	"xuetu-project/internal/middleware"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -15,7 +16,7 @@ func SetupRouter(ctrl *controller.Controller) *gin.Engine {
 
 	// 跨域配置需要放在路由前面，否则不生效！
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"},
+		AllowOrigins:     []string{"http://localhost:5174"},
 		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -25,17 +26,23 @@ func SetupRouter(ctrl *controller.Controller) *gin.Engine {
 
 	// API 版本
 	api := r.Group("/api")
+	api.Use(middleware.JwtAuth()) // 应用 JWT 中间件，保护后续路由
 
 	// 认证相关路由 (公开)
 	auth := api.Group("/auth")
 	{
 		auth.POST("/login", ctrl.UserController.Login)
 		auth.POST("/register", ctrl.UserController.Register)
+		auth.GET("/logout", ctrl.UserController.Logout)
 	}
 
 	// 用户管理路由
 	user := api.Group("/user")
 	{
+		user.GET("/getInfo", ctrl.UserController.GetUserInfo)
+		user.POST("/update", ctrl.UserController.UpdateUserInfo)
+
+		// ------------------------------------------------------------------------
 		user.POST("", ctrl.UserController.CreateUser)                            // 创建用户
 		user.GET("/:id", ctrl.UserController.GetUserByID)                        // 根据ID 获取用户
 		user.GET("", ctrl.UserController.QueryUsers)                             // 分页查询用户列表

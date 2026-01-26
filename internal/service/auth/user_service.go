@@ -3,8 +3,11 @@ package auth
 import (
 	"fmt"
 	"log"
+	"time"
+	"xuetu-project/internal/constant"
 	"xuetu-project/internal/model/auth"
 	"xuetu-project/internal/pkg/jwt"
+	"xuetu-project/internal/pkg/redis"
 	"xuetu-project/internal/repository"
 	"xuetu-project/internal/types"
 
@@ -16,6 +19,9 @@ import (
 type UserService interface {
 	Register(req *types.UserRegisterRequest) error
 	Login(req *types.UserLoginRequest) (string, error)
+	GetUserInfo(u uint) (*types.UserInfoResponse, error)
+	UpdateUserInfo(u uint, t *types.UserUpdateInfoRequest) error
+
 	GetUserByUsername(username string) (*auth.User, error)
 	CreateUser(user *auth.User) error
 	GetUserByID(id uint) (*auth.User, error)
@@ -37,8 +43,6 @@ type userService struct {
 func NewUserService(repo *repository.Repository) UserService {
 	return &userService{repo: repo}
 }
-
-// --------------------------------------------------------------
 
 // Register 用户注册 ✅
 func (s *userService) Register(req *types.UserRegisterRequest) error {
@@ -82,7 +86,7 @@ func (s *userService) Register(req *types.UserRegisterRequest) error {
 
 // Login 用户登录 ✅
 func (s *userService) Login(req *types.UserLoginRequest) (string, error) {
-	// 根据用户名获取用户信息
+	// 1. 校验用户是否存在 根据用户名获取用户信息
 	user, err := s.repo.UserRepo.GetByUsername(req.Username)
 	if err != nil {
 		return "", fmt.Errorf("用户查询失败: %v", err)
@@ -91,21 +95,92 @@ func (s *userService) Login(req *types.UserLoginRequest) (string, error) {
 		return "", fmt.Errorf("用户 %s 不存在", req.Username)
 	}
 
-	// 验证密码
+	// 2. 校验密码
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
 	if err != nil {
 		return "", fmt.Errorf("用户不存在或密码错误")
 	}
 
-	// 生成JWT token
-	token, err := jwt.GenerateToken(user.ID, user.Username)
+	// 3. 生成JWT token
+	tokenStr, err := jwt.GenerateToken(user.ID)
 	if err != nil {
 		return "", fmt.Errorf("生成Token失败: %v", err)
 	}
 
+	// 4. Redis存储Token：key=token:xxx, value=用户ID, 过期时间=2小时
+	redisKey := constant.RedisKeyToken + tokenStr
+	err = redis.Set(redisKey, user.ID, time.Duration(constant.RedisTokenExpire)*time.Second) // 注意这里的过期时间单位！！！
+	if err != nil {
+		return "", fmt.Errorf("存储Token到Redis失败: %v", err)
+	}
+
+	// 打印 token
+	log.Println("生成的 Token:", tokenStr)
+
 	// 返回 token
-	return token, nil
+	return tokenStr, nil
 }
+
+// GetUserInfo 获取用户信息 ✅
+func (s *userService) GetUserInfo(userId uint) (*types.UserInfoResponse, error) {
+	user, err := s.repo.UserRepo.GetByID(userId)
+	if err != nil {
+		return nil, fmt.Errorf("用户查询失败: %v", err)
+	}
+	if user == nil {
+		return nil, fmt.Errorf("用户不存在")
+	}
+	// 构建响应
+	resp := &types.UserInfoResponse{
+		Username:  user.Username,
+		Nickname:  user.Nickname,
+		Email:     user.Email,
+		Phone:     user.Phone,
+		Sex:       user.Sex,
+		Avatar:    user.Avatar,
+		Introduce: user.Introduce,
+	}
+	return resp, nil
+}
+
+// UpdateUserInfo 更新用户信息 ✅
+func (s *userService) UpdateUserInfo(userId uint, t *types.UserUpdateInfoRequest) error {
+	user, err := s.repo.UserRepo.GetByID(userId)
+	if err != nil {
+		return fmt.Errorf("用户查询失败: %v", err)
+	}
+	if user == nil {
+		return fmt.Errorf("用户不存在")
+	}
+
+	// 更新用户信息
+	if t.Nickname != "" {
+		user.Nickname = t.Nickname
+	}
+	if t.Email != "" {
+		user.Email = t.Email
+	}
+	if t.Phone != "" {
+		user.Phone = t.Phone
+	}
+	user.Sex = t.Sex
+	if t.Avatar != "" {
+		user.Avatar = t.Avatar
+	}
+	if t.Introduce != "" {
+		user.Introduce = t.Introduce
+	}
+
+	// 保存更新
+	err = s.repo.UserRepo.Update(user)
+	if err != nil {
+		return fmt.Errorf("更新用户信息失败: %v", err)
+	}
+
+	return nil
+}
+
+//   ---------------------------------------------------------------
 
 // GetUserByUsername 根据用户名获取用户 ✅
 func (s *userService) GetUserByUsername(username string) (*auth.User, error) {

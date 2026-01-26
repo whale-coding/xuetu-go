@@ -9,16 +9,14 @@ import (
 
 // CustomClaims 自定义Claims
 type CustomClaims struct {
-	UserID   uint   `json:"user_id"`
-	Username string `json:"username"`
+	UserId uint `json:"user_id"`
 	jwt.RegisteredClaims
 }
 
 // GenerateToken 生成Token
-func GenerateToken(userID uint, username string) (string, error) {
+func GenerateToken(userId uint) (string, error) {
 	claims := CustomClaims{
-		UserID:   userID,
-		Username: username,
+		UserId: userId,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Second * time.Duration(config.AppConfig.JWT.Expire))),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

@@ -26,14 +26,26 @@ type LoginResponse struct {
 	Token string `json:"token"`
 }
 
-//// 用户信息响应
-//type UserInfoResponse struct {
-//	ID        uint   `json:"id"`
-//	Username  string `json:"username"`
-//	Nickname  string `json:"nickname"`
-//	Email     string `json:"email"`
-//	CreatedAt string `json:"created_at"`
-//}
+// UserUpdateInfoRequest 更新用户信息请求
+type UserUpdateInfoRequest struct {
+	Nickname  string `json:"nickname" binding:"omitempty,min=2,max=20"` // 昵称,可选，长度2-20
+	Email     string `json:"email" binding:"omitempty,email"`           // 邮箱,可选，必须是有效邮箱格式
+	Phone     string `json:"phone" binding:"omitempty"`                 // 电话,可选
+	Sex       int    `json:"sex" binding:"omitempty,oneof=0 1"`         // 性别,可选，0-男,1-女
+	Avatar    string `json:"avatar" binding:"omitempty"`                // 头像,可选
+	Introduce string `json:"introduce" binding:"omitempty,max=255"`     // 介绍,可选，最大长度255
+}
+
+// UserInfoResponse 用户信息响应
+type UserInfoResponse struct {
+	Username  string `json:"username"`
+	Nickname  string `json:"nickname"`
+	Phone     string `json:"phone"`
+	Email     string `json:"email"`
+	Sex       int    `json:"sex"`
+	Avatar    string `json:"avatar"`
+	Introduce string `json:"introduce"`
+}
 
 //// Service DTO - 服务层内部使用的数据结构
 //type UserDTO struct {
